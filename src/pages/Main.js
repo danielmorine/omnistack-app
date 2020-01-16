@@ -18,7 +18,7 @@ function Main({ navigation }){
                         latitude: coords.latitude,
                         longitude: coords.longitude,
                         latitudeDelta: 0.04,
-                        longitudeDela: 0.04
+                        longitudeDelta: 0.04
                     })
                 }
             }
@@ -53,7 +53,7 @@ function Main({ navigation }){
                     autoCorrect={false}
                 />
                 <TouchableOpacity style={styles.loadButton} onPress={() => {}}>
-                   <MaterialIcons name="my-location" size={20} color="#FFF" /> Salvar
+                   <MaterialIcons name="my-location" size={20} color="#FFF" /><Text>Salvar</Text>
                 </TouchableOpacity>
             </View>
 
