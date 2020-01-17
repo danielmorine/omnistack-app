@@ -5,15 +5,19 @@ import MapView, { Marker,Callout } from 'react-native-maps';
 import { requestPermissionsAsync, getCurrentPositionAsync } from 'expo-location';
 import { MaterialIcons } from '@expo/vector-icons';
 
+
+import api from '../services/api';
+
 function Main({ navigation }){
     const [currentRegion, setCurrentRegion] = useState(null);
+    const [data, setData] = useState([]);
+    const [techs, setTechs] = useState('');
     
         useEffect(() => {
             async function loadInitialPosition(){
                 const { granted } = await requestPermissionsAsync();
                 if(granted){
                     const { coords } = await getCurrentPositionAsync({enableHighAccuracy: true});
-
                     setCurrentRegion({
                         latitude: coords.latitude,
                         longitude: coords.longitude,
@@ -29,21 +33,44 @@ function Main({ navigation }){
             return null;
         }
 
+    async function searchDev()  {        
+        const response = await api.get('/search', {
+            params: {
+                techs,
+                latitude: currentRegion.latitude,
+                longitude: currentRegion.longitude
+            }
+        });
+        setData(response.data);
+        console.log(response.data);
+        debugger;
+
+    }
+
+    const handleMapChange = (region) => {
+        setCurrentRegion(region);
+    }
+
     return(
         <>
-            <MapView style={styles.map} initialRegion={currentRegion}>
-                <Marker coordinate={{ latitude: -23.5634448, longitude: -46.6347358}}>
-                <Image style={styles.avatar} source={{uri: 'https://avatars3.githubusercontent.com/u/30440137?s=460&v=4'}}/>
-                <Callout onPress={() => {
-                    navigation.navigate('Profile', {gitHubUserName: 'danielmorine' });
-                    }}>
-                    <View style={styles.callOut}>
-                        <Text style={styles.devName}>Daniel</Text>
-                        <Text style={styles.devBio}>Dev FullStatck</Text>
-                        <Text style={styles.devTechs}>C#, React, ReactNative</Text>
-                    </View>
-                </Callout>
-                </Marker>
+            <MapView onRegionChangeComplete={handleMapChange} style={styles.map} initialRegion={currentRegion}>
+                {
+                    data && data.map(e =>                         
+                        <Marker key={e._id} coordinate={{ latitude: e.location.coordinates[1], longitude: e.location.coordinates[0]}}>
+                        <Image style={styles.avatar} source={{uri: e.avatar_url}}/>
+                        <Callout onPress={() => {
+                            navigation.navigate('Profile', {gitHubUserName: e.githubUserName });
+                            }}>
+                            <View style={styles.callOut}>
+                            <Text style={styles.devName}>{e.name}</Text>
+                                <Text style={styles.devBio}>{e.bio}</Text>
+                                <Text style={styles.devTechs}>{e.techs.map(i => `${i}, `)}</Text>
+                            </View>
+                        </Callout>
+                        </Marker>                                                
+                    )
+                        }
+
             </MapView>
             <View style={styles.searchForm}>
                 <TextInput style={styles.searchInput}
@@ -51,8 +78,10 @@ function Main({ navigation }){
                     placeholderTextColor="#FFF"
                     autoCapitalize="words"
                     autoCorrect={false}
+                    value={techs}
+                    onChangeText={value => setTechs(value)}
                 />
-                <TouchableOpacity style={styles.loadButton} onPress={() => {}}>
+                <TouchableOpacity style={styles.loadButton} onPress={searchDev}>
                    <MaterialIcons name="my-location" size={20} color="#FFF" /><Text>Salvar</Text>
                 </TouchableOpacity>
             </View>
@@ -60,7 +89,6 @@ function Main({ navigation }){
         </>
         )
 }
-
 
 const styles = StyleSheet.create({
     map:{
